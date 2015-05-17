@@ -1,0 +1,162 @@
+---
+title: 'DoD Fixed-Price Study: Contract Duration Classification'
+author: "Greg Sanders"
+date: "Tuesday, January 13, 2015"
+output:
+  html_document:
+    keep_md: yes
+    toc: yes
+---
+
+```{r hiddensetup, echo = FALSE}
+require(ggplot2)
+require(stringr)
+require(plyr)
+require(Hmisc)
+require(scales)
+options(error=recover)
+# setwd("K:\\Development\\Fixed-price")
+# setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Fixed-price")
+# Path<-"K:\\2007-01 PROFESSIONAL SERVICES\\R scripts and data\\"
+Path<-"C:\\Users\\Greg Sanders\\SkyDrive\\Documents\\R Scripts and Data SkyDrive\\"
+source(paste(Path,"lookups.r",sep=""))
+
+```
+
+Contracts are classified using a mix of numerical and categorical variables. While the changes in numerical variables are easy to grasp and summarize, a contract may have one line item that is competed and another that is not. As is detailed in the [exploration on R&D](RnD_1to5_exploration.md), we are only considering information available prior to contract start. The percentage of contract obligations that were competed is a valuable benchmark, but is highly influenced by factors that occured after contract start..
+
+##Studying contract duration within the sample.
+Initial contract duration is a new characteristic for CSIS.  The duration is calculated by comparing the earliest *effective date* to *current completion date.*  The current date was used rather than the *ultimate complete date* because the later is often unlabeled.  
+
+##Methodological Notes on Contract Period of Performance
+
+*Signed date* of the unmodified contract is used as a criteria for inclusion because the fiscal year used for reporting, and thus presumably certification, is based on *signed date* and not *effective date*.  CSIS may refine this methodology based on consultation with experts and further study of that data.  For greater transparency, considered alternatives have been listed with each period of performance value below: 
+
+**The contract start date** is the earliest *effective date* reported under the contract.
+* Alternatives include using *signed date* or using the unmodified contract values rather than the earliest values throughout the contract.
+
+**The contract end date** is the *current completion date* of the most recently signed contract modification.
+* *Ultimate completion date* is one alternative and is based on the theoretical maximum period of performance if all options were exercised.
+* *Last date to order* is only available for indefinite delivery vehicles and refers to the start and not the end date of a delivery order, but it is another possible alternative.
+* Finally, the modification with the most recent *signed date* could be replaced by the modification with the most recent *effect date* or instead the dates furthest in the future could be chosen.  
+
+**Completed contracts** have a contract end date in FY2013 or have been marked as closed and/or terminated. 
+
+```{r setup, echo = TRUE}
+AllTheater  <- read.csv(
+    paste("data\\FPDSwarTheater.txt", sep = ""),
+    header = TRUE, sep = "\t", dec = ".", strip.white = TRUE, 
+    na.strings = c("NULL","NA",""),
+    stringsAsFactors = TRUE
+    )
+colnames(AllTheater)[colnames(AllTheater)=="ï..fiscal_year"]<-"Fiscal.Year"
+#These will probably be moved into apply_lookups at some point
+names(AllTheater)<-apply_lookups(Path,AllTheater)
+AllTheater<-subset(AllTheater,Fiscal.Year>=2000)
+WarTheater<-subset(WarTheater,!is.na(PlaceWarTheater))
+
+summary(subset(WarTheater,
+               select=c(Fiscal.Year,
+      contractingcustomer,
+      contractingsubcustomer,
+      PlaceWarTheater,
+      PlaceCountryText,
+      ConstantOligatedAmount
+                                ))
+        )
+
+
+
+
+ggplot(
+    data = WarTheater,
+    aes_string(x = "PlaceWarTheater",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar()
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+ggplot(
+    data = WarTheater,
+    aes_string(x = "format(Fiscal.Year,'%Y')",
+               weight = "ConstantOligatedAmount")
+    ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))+facet_grid(PlaceWarTheater ~., scales="free_y", space="free_y")
+    #scale_x_date(breaks = date_breaks("years"),  labels = date_format("%y"))
+
+WarTheaterSummary<-aggregate(WarTheater$ConstantOligatedAmount
+                            , by=list(WarTheater$Fiscal.Year,WarTheater$PlaceWarTheater)
+                            ,FUN = "sum"
+                            ,na.rm =TRUE
+    )
+    names(WarTheaterSummary)<-c(
+      
+      "Fiscal.Year"
+          ,"WarTheater"
+      ,"ConstantOligatedAmount"
+    )
+
+WarCountrySummary<-aggregate(WarTheater$ConstantOligatedAmount
+                            , by=list(WarTheater$Fiscal.Year,
+                                      WarTheater$PlaceWarTheater,
+                                      WarTheater$PlaceCountryText)
+                            ,FUN = "sum"
+                            ,na.rm =TRUE
+    )
+    names(WarCountrySummary)<-c(
+        "WarTheater"
+     ,"Country"   
+      ,"Fiscal.Year"
+      ,"ConstantOligatedAmount"
+    )
+
+
+View(WarCountrySummary)
+    
+ggplot(
+    data = subset(WarTheater,PlaceWarTheater=="Iraq Theater"),
+    aes_string(x = "format(Fiscal.Year,'%Y')",
+               weight = "ConstantOligatedAmount")
+    ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))+facet_grid(PlaceCountryText ~., scales="free_y", space="free_y")+theme(strip.text.y=element_text(angle=0))
+    #scale_x_date(breaks = date_breaks("years"),  labels = date_format("%y"))
+
+
+
+ggplot(
+    data = subset(WarTheater,PlaceWarTheater=="Horn of Africa"),
+    aes_string(x = "PlaceCountryText",
+               weight = "ConstantOligatedAmount")
+    ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))
+
+
+
+ggplot(
+    data = subset(WarTheater,PlaceWarTheater=="Afghan Theater"),
+    aes_string(x = "PlaceCountryText",
+               weight = "ConstantOligatedAmount")
+    ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))
+
+
+ggplot(
+    data = subset(WarTheater,!PlaceWarTheater %in% c("Horn of Africa","Iraq Theater","Afghan Theater","Iraq","Afghanistan")),
+    aes_string(x = "PlaceCountryText",
+               weight = "ConstantOligatedAmount")
+    ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))
+
+#+facet_wrap(~PlaceWarTheater)
+
+
+ggplot(
+    data = ContractSample,
+    aes_string(x = "log(UnmodifiedDays)",
+                fill = "qDuration")
+    ) +     geom_bar(binwidth=0.1) 
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+
+
+
+```
+
+
