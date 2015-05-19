@@ -16,7 +16,7 @@ require(Hmisc)
 require(scales)
 options(error=recover)
 # setwd("K:\\Development\\Fixed-price")
-# setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Fixed-price")
+# setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Place")
 # Path<-"K:\\2007-01 PROFESSIONAL SERVICES\\R scripts and data\\"
 Path<-"C:\\Users\\Greg Sanders\\SkyDrive\\Documents\\R Scripts and Data SkyDrive\\"
 source(paste(Path,"lookups.r",sep=""))
@@ -43,17 +43,28 @@ Initial contract duration is a new characteristic for CSIS.  The duration is cal
 **Completed contracts** have a contract end date in FY2013 or have been marked as closed and/or terminated. 
 
 ```{r setup, echo = TRUE}
+# AllTheater  <- read.csv(
+#     paste("data\\FPDSwarTheater.txt", sep = ""),
+#     header = TRUE, sep = "\t", dec = ".", strip.white = TRUE, 
+#     na.strings = c("NULL","NA",""),
+#     stringsAsFactors = TRUE
+#     )
+
 AllTheater  <- read.csv(
-    paste("data\\FPDSwarTheater.txt", sep = ""),
-    header = TRUE, sep = "\t", dec = ".", strip.white = TRUE, 
+    paste("data\\Location_SP_WarTheaterHistoryBucketSubCustomer.csv", sep = ""),
+    header = TRUE, sep = ",", dec = ".", strip.white = TRUE, 
     na.strings = c("NULL","NA",""),
     stringsAsFactors = TRUE
     )
+
+
+
+
 colnames(AllTheater)[colnames(AllTheater)=="ï..fiscal_year"]<-"Fiscal.Year"
 #These will probably be moved into apply_lookups at some point
-names(AllTheater)<-apply_lookups(Path,AllTheater)
+AllTheater<-apply_lookups(Path,AllTheater)
 AllTheater<-subset(AllTheater,Fiscal.Year>=2000)
-WarTheater<-subset(WarTheater,!is.na(PlaceWarTheater))
+WarTheater<-subset(AllTheater,!is.na(PlaceWarTheater))
 
 summary(subset(WarTheater,
                select=c(Fiscal.Year,
@@ -144,14 +155,6 @@ ggplot(
     ) +     geom_bar()+theme(axis.text.x=element_text(angle=90))
 
 #+facet_wrap(~PlaceWarTheater)
-
-
-ggplot(
-    data = ContractSample,
-    aes_string(x = "log(UnmodifiedDays)",
-                fill = "qDuration")
-    ) +     geom_bar(binwidth=0.1) 
-#+scale_x_continuous(limits=c(0, 2000))
 
 
 
