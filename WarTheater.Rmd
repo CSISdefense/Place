@@ -58,9 +58,35 @@ AllTheater  <- read.csv(
     )
 
 
+AllTheater$RegionComparison[AllTheater$PlaceCombatantCommand=="PACOM"]<-"PACOM"
+AllTheater$RegionComparison[!is.na(AllTheater$PlaceWarTheater)]<-
+    as.character(AllTheater$PlaceWarTheater[!is.na(AllTheater$PlaceWarTheater)])
+AllTheater$RegionComparison[AllTheater$PlaceCountryText=="KUWAIT"]<-"KUWAIT"
+
+AllTheater$RegionComparison2[AllTheater$PlaceCombatantCommand=="PACOM"]<-"PACOM"
+AllTheater$RegionComparison2[AllTheater$PlaceCombatantCommand=="CENTCOM"]<-"CENTCOM"
+AllTheater$RegionComparison2[AllTheater$PlaceCountryText=="IRAQ"]<-"IRAQ"
+AllTheater$RegionComparison2[AllTheater$PlaceCountryText=="AFGHANISTAN"]<-"AFGHANISTAN"
+
+AllTheater$RegionComparison3[AllTheater$PlaceCombatantCommand=="PACOM"]<-"PACOM"
+AllTheater$RegionComparison3[AllTheater$PlaceCombatantCommand=="CENTCOM"]<-"CENTCOM"
+AllTheater$RegionComparison3[AllTheater$PlaceCountryText=="IRAQ"]<-"IRAQ"
+AllTheater$RegionComparison3[AllTheater$PlaceCountryText=="AFGHANISTAN"]<-"AFGHANISTAN"
+AllTheater$RegionComparison3[AllTheater$PlaceCountryText=="KUWAIT"]<-"KUWAIT"
+AllTheater$RegionComparison3[AllTheater$PlaceCountryText %in% c("BAHRAIN",
+                                                                "QATAR",
+                                                                "UNITED ARAB EMIRATES",
+                                                                "SAUDI ARABIA",
+                                                                "OMAN")]<-"Other GCC"
+
+AllTheater$RegionComparison4[AllTheater$PlaceCombatantCommand=="PACOM"]<-"PACOM"
+AllTheater$RegionComparison4[AllTheater$PlaceCombatantCommand=="CENTCOM"]<-"CENTCOM"
+AllTheater$RegionComparison4[AllTheater$PlaceCountryText=="IRAQ"]<-"IRAQ"
+AllTheater$RegionComparison4[AllTheater$PlaceCountryText=="AFGHANISTAN"]<-"AFGHANISTAN"
+AllTheater$RegionComparison4[AllTheater$PlaceCountryText=="KUWAIT"]<-"KUWAIT"
 
 
-colnames(AllTheater)[colnames(AllTheater)=="ï..fiscal_year"]<-"Fiscal.Year"
+PlaceCountryTextcolnames(AllTheater)[colnames(AllTheater)=="ï..fiscal_year"]<-"Fiscal.Year"
 #These will probably be moved into apply_lookups at some point
 AllTheater<-apply_lookups(Path,AllTheater)
 AllTheater<-subset(AllTheater,Fiscal.Year>=2000)
@@ -86,6 +112,173 @@ ggplot(
                fill="contractingcustomer")
     ) +     geom_bar()
 #+scale_x_continuous(limits=c(0, 2000))
+
+ThreeCommand<-subset(AllTheater,PlaceCombatantCommand %in% c("CENTCOM","EUCOM","PACOM")&
+                         contractingcustomer %in% c("Defense","State and IAP"))
+
+ggplot(
+    data = ThreeCommand,
+    aes_string(x = "PlaceCombatantCommand",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar()
+#+scale_x_continuous(limits=c(0, 2000))
+
+ggplot(
+    data = ThreeCommand,
+    aes_string(x = "Fiscal.Year",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar()+facet_grid(PlaceCombatantCommand ~ .)+
+    scale_x_date(breaks = date_breaks("years"))
+
+
+ggplot(
+    data = subset(ThreeCommand,!is.na(RegionComparison)),
+    aes_string(x = "Fiscal.Year",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar()+facet_grid(RegionComparison ~ .)+
+    scale_x_date(breaks = date_breaks("years"))
+
+ThreeCommandSummed<-aggregate(ThreeCommand$ConstantOligatedAmount
+                               , by=list(ThreeCommand$RegionComparison
+                                         ,ThreeCommand$Fiscal.Year
+                               )
+                               ,FUN = "sum"
+                               ,na.rm =TRUE
+        )
+names(ThreeCommandSummed)<-c("RegionComparison",
+                             "Fiscal.Year",
+                             "ConstantOligatedAmount")
+
+
+ThreeCommandSummed2<-aggregate(ThreeCommand$ConstantOligatedAmount
+                               , by=list(ThreeCommand$RegionComparison2
+                                         ,ThreeCommand$Fiscal.Year
+                               )
+                               ,FUN = "sum"
+                               ,na.rm =TRUE
+        )
+names(ThreeCommandSummed2)<-c("RegionComparison2",
+                             "Fiscal.Year",
+                             "ConstantOligatedAmount")
+
+
+ThreeCommandSummed3<-aggregate(ThreeCommand$ConstantOligatedAmount
+                               , by=list(ThreeCommand$RegionComparison3
+                                         ,ThreeCommand$Fiscal.Year
+                               )
+                               ,FUN = "sum"
+                               ,na.rm =TRUE
+        )
+names(ThreeCommandSummed3)<-c("RegionComparison3",
+                             "Fiscal.Year",
+                             "ConstantOligatedAmount")
+
+
+ThreeCommandSummed4<-aggregate(ThreeCommand$ConstantOligatedAmount
+                               , by=list(ThreeCommand$RegionComparison4
+                                         ,ThreeCommand$Fiscal.Year
+                               )
+                               ,FUN = "sum"
+                               ,na.rm =TRUE
+        )
+names(ThreeCommandSummed4)<-c("RegionComparison4",
+                             "Fiscal.Year",
+                             "ConstantOligatedAmount")
+
+
+View(ThreeCommandSummed2)
+ggplot(
+    data = subset(ThreeCommandSummed,!is.na(RegionComparison)),
+    aes_string(x = "Fiscal.Year",
+               y = "ConstantOligatedAmount",
+               color="RegionComparison")
+    ) +     geom_line()+     scale_x_date(breaks = date_breaks("years"))
+
+ggplot(
+    data = subset(ThreeCommandSummed2,!is.na(RegionComparison2)),
+    aes_string(x = "Fiscal.Year",
+               y = "ConstantOligatedAmount",
+               color="RegionComparison2")
+    ) +     geom_line()+     scale_x_date(breaks = date_breaks("years"))
+
+ggplot(
+    data = subset(ThreeCommandSummed3,!is.na(RegionComparison3)),
+    aes_string(x = "Fiscal.Year",
+               y = "ConstantOligatedAmount",
+               color="RegionComparison3")
+    ) +     geom_line()+     scale_x_date(breaks = date_breaks("years"))
+
+
+ggplot(
+    data = subset(ThreeCommandSummed4,!is.na(RegionComparison4)),
+    aes_string(x = "Fiscal.Year",
+               y = "ConstantOligatedAmount",
+               color="RegionComparison4")
+    ) +     geom_line()+     scale_x_date(breaks = date_breaks("years"))
+View(ThreeCommandSummed4)
+View(ThreeCommandSummed3)
+
+ggplot(
+    data = subset(ThreeCommand,RegionComparison3=='CENTCOM'),
+    aes_string(x = "Fiscal.Year",
+               weight = "ConstantOligatedAmount",
+               color="PlaceCountryText")
+    ) +     geom_bar()+     scale_x_date(breaks = date_breaks("years"))+facet_wrap("PlaceCountryText")
+
+
+
+ggplot(
+    data = subset(ThreeCommand,!is.na(RegionComparison)),
+    aes_string(x = "RegionComparison",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar()+facet_grid(Fiscal.Year ~ .)
+
+
+
+
+ggplot(
+    data = ThreeCommand,
+    aes_string(x = "PlaceCombatantCommand",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar() + facet_wrap("PlaceWarTheater")
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+ggplot(
+    data = subset(ThreeCommand,PlaceCombatantCommand=='USPACOM'),
+    aes_string(x = "PlaceCountryText",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar() + facet_wrap("PlaceCountryText")
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+ggplot(
+    data = subset(ThreeCommand,PlaceCountryText %in% c('AUSTRALIA','JAPAN','SOUTH KOREA')),
+    aes_string(x = "Fiscal.Year",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar() + facet_wrap("PlaceCountryText")
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+
+ggplot(
+    data = subset(ThreeCommand,PlaceCombatantCommand=='USCENTCOM'),
+    aes_string(x = "PlaceCountryText",
+               weight = "ConstantOligatedAmount",
+               fill="contractingcustomer")
+    ) +     geom_bar() + facet_wrap("PlaceCountryText")
+#+scale_x_continuous(limits=c(0, 2000))
+
+
+
+
 
 
 ggplot(
