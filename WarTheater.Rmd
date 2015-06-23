@@ -16,7 +16,7 @@ require(Hmisc)
 require(scales)
 options(error=recover)
 # setwd("K:\\Development\\Fixed-price")
-# setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Place")
+setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Place")
 # Path<-"K:\\2007-01 PROFESSIONAL SERVICES\\R scripts and data\\"
 Path<-"C:\\Users\\Greg Sanders\\SkyDrive\\Documents\\R Scripts and Data SkyDrive\\"
 source(paste(Path,"lookups.r",sep=""))
