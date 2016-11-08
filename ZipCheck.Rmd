@@ -1,0 +1,79 @@
+---
+title: 'ZipCode Look'
+author: "Greg Sanders"
+date: "Tuesday, January 13, 2015"
+output:
+  html_document:
+    keep_md: yes
+    toc: yes
+---
+
+```{r hiddensetup, echo = FALSE}
+require(ggplot2)
+require(stringr)
+require(plyr)
+require(Hmisc)
+require(scales)
+options(error=recover)
+
+setwd("K:\\Development\\Place")
+# setwd("C:\\Users\\Greg Sanders\\Documents\\Development\\Place")
+Path<-"K:\\2007-01 PROFESSIONAL SERVICES\\R scripts and data\\"
+# Path<-"C:\\Users\\Greg Sanders\\SkyDrive\\Documents\\R Scripts and Data SkyDrive\\"
+source(paste(Path,"lookups.r",sep=""))
+
+```
+
+
+```{r setup, echo = TRUE}
+# AllTheater  <- read.csv(
+#     paste("data\\FPDSwarTheater.txt", sep = ""),
+#     header = TRUE, sep = "\t", dec = ".", strip.white = TRUE, 
+#     na.strings = c("NULL","NA",""),
+#     stringsAsFactors = TRUE
+#     )
+
+AllZip  <- read.csv(
+    paste("Zipcode.csv", sep = ""),
+    header = TRUE, sep = ",", dec = ".", strip.white = TRUE, 
+    na.strings = c("NULL","NA",""),
+    stringsAsFactors = TRUE
+    )
+
+    if("ï..fiscal_year" %in% colnames(AllZip)){
+        colnames(AllZip)[colnames(AllZip)=="ï..fiscal_year"]<-"fiscal_year"
+    }
+
+str(AllZip$placeofperformancezipcode)
+str(AllZip$zipcode)
+
+AllZip$placeofperformancezipcode[AllZip$placeofperformancezipcode=="-"]<-NA
+AllZip$placeofperformancezipcode[AllZip$placeofperformancezipcode=="--"]<-NA
+AllZip$placeofperformancezipcode[AllZip$placeofperformancezipcode=="---"]<-NA
+AllZip$placeofperformancezipcode[AllZip$placeofperformancezipcode==0]<-NA
+AllZip$zipcode[AllZip$zipcode=="-"]<-NA
+AllZip$zipcode[AllZip$zipcode=="--"]<-NA
+AllZip$zipcode[AllZip$zipcode=="---"]<-NA
+AllZip$zipcode[AllZip$zipcode==0]<-NA
+
+AllZip$placeofperformancezipcodeUnlabled<-is.na(as.numeric(as.character(AllZip$placeofperformancezipcode)))
+AllZip$zipcodeUnlabled<-is.na(as.numeric(as.character(AllZip$zipcode)))
+
+
+summary(AllZip)
+
+ZipSum<-ddply(AllZip,.(fiscal_year,placeofperformancezipcodeUnlabled,zipcodeUnlabled)
+              ,summarise
+              ,ObligatedAmount=sum(ObligatedAmount,na.rm=TRUE))
+
+ZipSum<-ddply(ZipSum,.(fiscal_year)
+              ,transform
+              ,pObligatedAmount=ObligatedAmount/sum(ObligatedAmount,na.rm=TRUE))
+
+write.csv(ZipSum,"ZipSum.csv")
+
+
+
+```
+
+
